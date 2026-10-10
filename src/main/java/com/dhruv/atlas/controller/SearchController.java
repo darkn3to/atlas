@@ -18,7 +18,7 @@ class SearchController {
     }
     @GetMapping("/search")
     public ResponseEntity<SearchApiResponse> search(@RequestParam String query) {
-        SearchApiResponse response=searchService.search(query);
+        SearchApiResponse response = searchService.search(query);
         return ResponseEntity.ok(response);
     }
 }
