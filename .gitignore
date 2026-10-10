@@ -41,3 +41,4 @@ build/
 *.crt
 *.json
 *.py
+*.bak
