@@ -79,4 +79,51 @@ public class Main {
             esClient.close();
         }
     }
-}*/
+    package com.dhruv.atlas.ingestion;
+
+import com.wuman.jreadability.Readability;
+import net.dankito.readability4j.Article;
+import net.dankito.readability4j.Readability4J;
+import org.springframework.stereotype.Service;
+
+@Service
+public class HtmlContentExtractor {
+    public record ExtractedContent(
+
+            String html
+    ) {}
+
+    public String extract(String url, String html) {
+        if (url == null || url.isBlank()) {
+            throw new IllegalArgumentException("Page URL cannot be blank. ");
+        }
+
+        if (html == null || html.isBlank()) {
+            throw new IllegalArgumentException("HTML must not be blank. ");
+        }
+
+        //Readability readability = new Readability();
+
+        Readability readability = new Readability(html);
+        readability.init();
+
+        /*if (article.getContent() == null) {
+            throw new IllegalStateException("Readability couldn't extract content from: " + url + ". ");
+        }*/
+
+        /*return new ExtractedContent(
+                article.getTitle(),
+                article.getContent(),
+                article.getTextContent(),
+                article.getUri()
+        );
+        return readability.outerHtml();
+    }
+            }*/
+
+
+
+
+
+
+

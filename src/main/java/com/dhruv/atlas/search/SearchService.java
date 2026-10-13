@@ -1,4 +1,4 @@
-package com.dhruv.atlas.service;
+package com.dhruv.atlas.search;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
