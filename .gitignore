@@ -43,3 +43,4 @@ build/
 *.py
 *.bak
 *.yml
+*.txt

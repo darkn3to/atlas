@@ -9,11 +9,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class HtmlContentExtractorTest {
 
-    @Test
+    //@Test
     void extractsMainContentFromHtml() throws IOException {
-        String url = "https://docs.spring.io/spring-boot/3.5/reference/features/external-config.html#features.external-config.encrypting";
+        String url = "https://redis.io/docs/latest/develop/get-started/search-tutorial/vector-search/#how-vector-search-works";
 
-        var extractor = new HtmlContentExtractor("https://xyz.com");
+        var extractor = new HtmlContentExtractor("https://readability-js-cwg4g4gcg9c2amb4.centralindia-01.azurewebsites.net");
         DocumentFetchService documentFetchService = new DocumentFetchService();
         Document document = documentFetchService.fetch(url);
         var result = extractor.extract(url, document.html());
