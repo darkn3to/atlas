@@ -5,7 +5,6 @@ import com.dhruv.atlas.ingestion.model.DocumentationPage;
 import com.dhruv.atlas.ingestion.model.SearchChunk;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
-import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,37 +33,46 @@ public class Chunker {
     public List<SearchChunk> performChunking(@NonNull DocumentationPage documentationPage) {
         List<SearchChunk> chunks = new ArrayList<>();
         List<String> currentSectionPath = null;
-        int currentChunkSize = 0;
 
-        StringBuilder content = new StringBuilder();
+        StringBuilder contentBuffer = new StringBuilder();
 
         for (ContentBlock cb : documentationPage.blocks()) {
             List<String> blockSectionPath = cb.sectionPath();
+            String blockContent = cb.textContent();
 
-            if (currentSectionPath == null) {
-                currentSectionPath = new ArrayList<>(blockSectionPath);
-            }
-            else if (!compareSections(currentSectionPath, blockSectionPath)) {
+            boolean sectionChanged = currentSectionPath != null
+                    && !compareSections(currentSectionPath, blockSectionPath);
+
+            int separatorLength = (contentBuffer.isEmpty()) ? 0 : 2;
+            int proposedSize = contentBuffer.length()
+                    + separatorLength
+                    + blockContent.length();
+
+            boolean sizeExceeded = proposedSize > maxChunkSize;
+
+            if (!contentBuffer.isEmpty() && (sectionChanged || sizeExceeded)) {
                 chunks.add(new SearchChunk(
-                        content.toString().trim(),
+                        contentBuffer.toString().trim(),
                         documentationPage.sourceUrl(),
                         currentSectionPath,
                         documentationPage.title()
                 ));
 
-                content = new StringBuilder();
-                currentSectionPath = new ArrayList<>(blockSectionPath);
+                contentBuffer = new StringBuilder();
             }
 
-            if (!content.isEmpty()) {
-                content.append("\n\n");
+            if (contentBuffer.isEmpty()) {
+                currentSectionPath = new ArrayList<>(blockSectionPath);
+            } else {
+                contentBuffer.append("\n\n");
             }
-            content.append(cb.textContent());
+
+            contentBuffer.append(blockContent);
         }
 
-        if (currentSectionPath != null) {
+        if (!contentBuffer.isEmpty()) {
             chunks.add(new SearchChunk(
-                    content.toString().trim(),
+                    contentBuffer.toString().trim(),
                     documentationPage.sourceUrl(),
                     currentSectionPath,
                     documentationPage.title()
