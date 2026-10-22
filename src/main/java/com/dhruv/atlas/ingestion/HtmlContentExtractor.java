@@ -34,7 +34,7 @@ public class HtmlContentExtractor {
 
         var healthRequestFactory = new SimpleClientHttpRequestFactory();
         healthRequestFactory.setConnectTimeout(Duration.ofSeconds(2));
-        healthRequestFactory.setReadTimeout(Duration.ofSeconds(3));
+        healthRequestFactory.setReadTimeout(Duration.ofSeconds(5));
 
         this.healthClient = RestClient.builder()
                 .baseUrl(baseUrl)
