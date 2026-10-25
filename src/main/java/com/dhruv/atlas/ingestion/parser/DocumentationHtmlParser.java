@@ -128,40 +128,38 @@ public class DocumentationHtmlParser {
             }
             headingStack.add(heading);
 
-            documentationPage.blocks().add(new ContentBlock(ContentType.HEADING, heading, (short) level, headingStack, null, extractLinks(element)));
+            documentationPage.blocks().add(new ContentBlock(ContentType.HEADING, heading, (short) level, new ArrayList<>(headingStack), null, extractLinks(element)));
+            return;
         }
 
         switch (tag) {
             case "pre":
                 String code = extractCode(element);
                 if (code.isBlank()) return;
-                documentationPage.blocks().add(new ContentBlock(ContentType.CODE_BLOCK, code, (short) 0, headingStack, extractLanguage(element), extractLinks(element)));
+                documentationPage.blocks().add(new ContentBlock(ContentType.CODE_BLOCK, code, (short) 0, new ArrayList<>(headingStack), extractLanguage(element), extractLinks(element)));
                 return;
             case "p":
                 String text = element.wholeText();
                 if (text.isBlank()) return;
-                documentationPage.blocks().add(new ContentBlock(ContentType.PARAGRAPH, text, (short) 0, headingStack, null, extractLinks(element)));
+                documentationPage.blocks().add(new ContentBlock(ContentType.PARAGRAPH, text, (short) 0, new ArrayList<>(headingStack), null, extractLinks(element)));
                 return;
             case "ul", "ol":
                 String content = extractList(element);
                 if (content.isBlank()) return;
-                documentationPage.blocks().add(new ContentBlock(ContentType.LIST, content, (short) 0, headingStack, null, extractLinks(element)));
+                documentationPage.blocks().add(new ContentBlock(ContentType.LIST, content, (short) 0, new ArrayList<>(headingStack), null, extractLinks(element)));
                 return;
             case "table":
                 String table = extractTable(element);
                 if (table.isBlank()) return;
-                documentationPage.blocks().add(new ContentBlock(ContentType.TABLE, table, (short) 0, headingStack, null, extractLinks(element)));
+                documentationPage.blocks().add(new ContentBlock(ContentType.TABLE, table, (short) 0, new ArrayList<>(headingStack), null, extractLinks(element)));
                 return;
             case "a":
                 if (element.hasAttr("href") && !element.attr("href").toLowerCase().startsWith("#")) {
-                    documentationPage.blocks().add(new ContentBlock(ContentType.LINK, element.text().trim(), (short) 0, headingStack, null, extractLinks(element)));
+                    documentationPage.blocks().add(new ContentBlock(ContentType.LINK, element.text().trim(), (short) 0, new ArrayList<>(headingStack), null, extractLinks(element)));
                 }
                 return;
             case "nav":
                 return;
-            default: {
-
-            }
         }
 
         for (Element child : element.children()) {
@@ -188,7 +186,7 @@ public class DocumentationHtmlParser {
         List<String> headingStack = new ArrayList<>();
         headingStack.add(title);
 
-        for (Element child : document) {
+        for (Element child : document.children()) {
             visit(child, documentationPage, headingStack);
         }
 
