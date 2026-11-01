@@ -1,4 +1,4 @@
-package com.dhruv.atlas.ingestion;
+package com.dhruv.atlas.ingestion.parser;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +10,8 @@ import java.time.Duration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
+
+import static com.dhruv.atlas.utils.Utils.hasCause;
 
 @Slf4j
 @Service
@@ -25,7 +27,7 @@ public class HtmlContentExtractor {
     ) {
         var requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(Duration.ofSeconds(2));
-        requestFactory.setReadTimeout(Duration.ofSeconds(10));
+        requestFactory.setReadTimeout(Duration.ofSeconds(40));
 
         this.restClient = RestClient.builder()
                     .baseUrl(baseUrl)
@@ -59,25 +61,6 @@ public class HtmlContentExtractor {
             String content,
             String textContent
     ) {}
-
-    private static boolean hasCause(
-            Throwable error,
-            Class<? extends Throwable> expectedType
-    ) {
-        Throwable current = error;
-
-        while (current != null) {
-            if (expectedType.isInstance(current)) {
-                return true;
-            }
-            Throwable next = current.getCause();
-            if (next == current) {
-                break;
-            }
-            current = next;
-        }
-        return false;
-    }
 
     private void coldStartService() {
         log.info("Cold starting Readability service. ");

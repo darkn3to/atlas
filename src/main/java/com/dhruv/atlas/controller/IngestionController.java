@@ -1,4 +1,4 @@
-package com.dhruv.atlas.controller;
+/*package com.dhruv.atlas.controller;
 
 import com.dhruv.atlas.ingestion.DocumentIngestionService;
 import org.springframework.http.ResponseEntity;
@@ -18,3 +18,4 @@ public class IngestionController {
         return ResponseEntity.ok("Documents ingested successfully. ");
     }
 }
+*/

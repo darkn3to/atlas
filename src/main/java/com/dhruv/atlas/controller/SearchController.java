@@ -13,12 +13,21 @@ import org.springframework.web.bind.annotation.RestController;
 class SearchController {
     private final SearchService searchService;
 
+    private SearchApiResponse response;
+
     public SearchController(SearchService searchService) {
         this.searchService=searchService;
     }
+
     @GetMapping("/search")
     public ResponseEntity<SearchApiResponse> search(@RequestParam String query) {
-        SearchApiResponse response = searchService.search(query);
+        response = searchService.search(query);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/hybridSearch")
+    public ResponseEntity<SearchApiResponse> hybridSearch(@RequestParam String query) {
+        response = searchService.hybridSearch(query);
         return ResponseEntity.ok(response);
     }
 }

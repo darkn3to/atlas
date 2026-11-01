@@ -1,5 +1,6 @@
 package com.dhruv.atlas.ingestion;
 
+import com.dhruv.atlas.ingestion.embeddings.EmbeddingService;
 import com.dhruv.atlas.ingestion.model.ContentBlock;
 import com.dhruv.atlas.ingestion.model.DocumentationPage;
 import com.dhruv.atlas.ingestion.model.SearchChunk;
@@ -14,8 +15,11 @@ import java.util.List;
 public class Chunker {
     private final int maxChunkSize;
 
-    public Chunker(int maxChunkSize) {
+    private final EmbeddingService embeddingService;
+
+    public Chunker(int maxChunkSize, EmbeddingService embeddingService) {
         this.maxChunkSize = maxChunkSize;
+        this.embeddingService = embeddingService;
     }
 
     private boolean compareSections(List<String> a, List<String> b) {
@@ -51,11 +55,14 @@ public class Chunker {
             boolean sizeExceeded = proposedSize > maxChunkSize;
 
             if (!contentBuffer.isEmpty() && (sectionChanged || sizeExceeded)) {
+                List<Float> embedding = embeddingService.generateEmbeddings(contentBuffer.toString());
+                log.info(String.valueOf(embedding.size()));
                 chunks.add(new SearchChunk(
                         contentBuffer.toString().trim(),
                         documentationPage.sourceUrl(),
                         currentSectionPath,
-                        documentationPage.title()
+                        documentationPage.title(),
+                        embedding
                 ));
 
                 contentBuffer = new StringBuilder();
@@ -71,11 +78,14 @@ public class Chunker {
         }
 
         if (!contentBuffer.isEmpty()) {
+            List<Float> embedding = embeddingService.generateEmbeddings(contentBuffer.toString());
+            log.info(String.valueOf(embedding.size()));
             chunks.add(new SearchChunk(
                     contentBuffer.toString().trim(),
                     documentationPage.sourceUrl(),
                     currentSectionPath,
-                    documentationPage.title()
+                    documentationPage.title(),
+                    embedding
             ));
         }
 

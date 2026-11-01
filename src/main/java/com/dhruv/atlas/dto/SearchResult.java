@@ -8,6 +8,6 @@ import lombok.Setter;
 @Setter
 @Builder
 public class SearchResult {
-    private String id, title, content, source, url;
+    private String id, title, sectionPath, content, source, url;
     private Double score;
 }
