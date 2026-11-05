@@ -7,7 +7,8 @@ public record SearchChunk(
         String sourceUrl,
         List<String> sectionPath,
         String title,
-        List<Float> embedding
+        List<Float> embedding,
+        List<String> identifiers
 ) {
     public SearchChunk {
         sectionPath = (sectionPath == null)?List.of():List.copyOf(sectionPath);

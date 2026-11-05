@@ -39,12 +39,13 @@ public class Chunker {
         List<String> currentSectionPath = null;
 
         StringBuilder contentBuffer = new StringBuilder();
+        List<String> identifiers = new ArrayList<>();
 
         for (ContentBlock cb : documentationPage.blocks()) {
             List<String> blockSectionPath = cb.sectionPath();
             String blockContent = cb.textContent();
 
-            boolean sectionChanged = currentSectionPath != null
+            boolean sectionChanged = (currentSectionPath != null)
                     && !compareSections(currentSectionPath, blockSectionPath);
 
             int separatorLength = (contentBuffer.isEmpty()) ? 0 : 2;
@@ -56,16 +57,20 @@ public class Chunker {
 
             if (!contentBuffer.isEmpty() && (sectionChanged || sizeExceeded)) {
                 List<Float> embedding = embeddingService.generateEmbeddings(contentBuffer.toString());
-                log.info(String.valueOf(embedding.size()));
+
+                //log.info(String.valueOf(embedding.size()));
+                //if (!identifiers.isEmpty()) System.out.println(identifiers);
                 chunks.add(new SearchChunk(
                         contentBuffer.toString().trim(),
                         documentationPage.sourceUrl(),
                         currentSectionPath,
                         documentationPage.title(),
-                        embedding
+                        embedding,
+                        identifiers
                 ));
 
                 contentBuffer = new StringBuilder();
+                identifiers = new ArrayList<>();
             }
 
             if (contentBuffer.isEmpty()) {
@@ -75,17 +80,22 @@ public class Chunker {
             }
 
             contentBuffer.append(blockContent);
+            if (cb.identifiers() != null && !cb.identifiers().isEmpty()) {
+                identifiers.addAll(cb.identifiers());
+            }
         }
 
         if (!contentBuffer.isEmpty()) {
             List<Float> embedding = embeddingService.generateEmbeddings(contentBuffer.toString());
-            log.info(String.valueOf(embedding.size()));
+            //log.info(String.valueOf(embedding.size()));
+            //if (!identifiers.isEmpty()) System.out.println(identifiers);
             chunks.add(new SearchChunk(
                     contentBuffer.toString().trim(),
                     documentationPage.sourceUrl(),
                     currentSectionPath,
                     documentationPage.title(),
-                    embedding
+                    embedding,
+                    identifiers
             ));
         }
 

@@ -2,6 +2,7 @@ package com.dhruv.atlas.search;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import com.dhruv.atlas.dto.SearchApiResponse;
@@ -9,6 +10,7 @@ import com.dhruv.atlas.dto.SearchResult;
 import com.dhruv.atlas.ingestion.model.SearchChunk;
 import com.dhruv.atlas.exception.SearchServiceException;
 import com.dhruv.atlas.ingestion.embeddings.EmbeddingService;
+import com.dhruv.atlas.ingestion.parser.DocumentationHtmlParserService;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 
@@ -34,10 +36,14 @@ public class SearchService {
             throw new IllegalArgumentException("Query must not be blank. ");
         }
 
+        DocumentationHtmlParserService documentationHtmlParserService = new DocumentationHtmlParserService();
+
+        List<String> identifiers = documentationHtmlParserService.extractIdentifiersFromUserQuery(query);
+
         List<SearchResult> response = new ArrayList<>();
         try {
             SearchResponse<SearchChunk> searchResponse = esClient.search(s -> s
-                            .index("developer_docs")
+                            .index("developer_docs2")
                             .size(10)
                             .query(q -> q.bool(b -> b
                                     .should(sh -> sh.matchPhrase(mp -> mp
@@ -54,12 +60,16 @@ public class SearchService {
                                             .query(query)
                                             .fields("title^6", "sectionPath^4", "textContent")
                                             .operator(Operator.And)
-                                            .boost(3.0f)
+                                            .boost(2.0f)
                                     ))
-                                    /*.should(sh -> sh.multiMatch(m -> m
-                                            .query(query)
-                                            .fields("title^6", "sectionPath^4", "textContent")
-                                    ))*/
+                                    .should(sh -> sh.terms(t -> t
+                                            .field("identifiers")
+                                            .terms(v -> v.value(
+                                                    identifiers.stream()
+                                                            .map(FieldValue::of)
+                                                            .toList()
+                                            ))
+                                    ))
                                     .minimumShouldMatch("1")
                             )),
                     SearchChunk.class
@@ -96,7 +106,7 @@ public class SearchService {
         List<SearchResult> response = new ArrayList<>();
         try {
             SearchResponse<SearchChunk> searchResponse = esClient.search(s -> s
-                            .index("developer_docs")
+                            .index("developer_docs2")
                             .knn(k -> k
                                     .field("embedding")
                                     .queryVector(searchQueryEmbedding)

@@ -15,13 +15,13 @@ import static com.dhruv.atlas.utils.Utils.hasCause;
 
 @Slf4j
 @Service
-public class HtmlContentExtractor {
+public class HtmlContentExtractorService {
 
     private final RestClient restClient, healthClient;
     private static final long IDLE_THRESHOLD_NANOS = Duration.ofMinutes(5).toNanos();
     private volatile long serviceLastUsed = 0;
 
-    public HtmlContentExtractor(
+    public HtmlContentExtractorService(
             @Value("${readability.service.url:http://localhost:3000}")
             String baseUrl
     ) {

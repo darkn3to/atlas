@@ -58,7 +58,7 @@ public class SearchIndexService {
                 for (SearchChunk searchChunk : chunks) {
                     bulk.operations(operation -> operation
                             .index(index -> index
-                                    .index("developer_docs")
+                                    .index("developer_docs2")
                                     .id(generateId(searchChunk))
                                     .document(searchChunk)));
                 }
