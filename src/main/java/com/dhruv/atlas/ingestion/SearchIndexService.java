@@ -7,13 +7,10 @@ import com.dhruv.atlas.exception.DocumentIngestionException;
 import com.dhruv.atlas.ingestion.model.SearchChunk;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.HexFormat;
 import java.util.List;
+
+import static com.dhruv.atlas.utils.Utils.generateChunkId;
 
 @Service
 public class SearchIndexService {
@@ -23,34 +20,6 @@ public class SearchIndexService {
         this.esClient = elasticsearchClient;
     }
 
-    public static String generateId(SearchChunk chunk) {
-        try {
-            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-
-            try (DataOutputStream out = new DataOutputStream(buffer)) {
-                writeField(out, chunk.sourceUrl());
-                writeField(out, String.join("", chunk.sectionPath()));
-                writeField(out, chunk.textContent());
-            }
-
-            byte[] hash = MessageDigest.getInstance("SHA-256")
-                    .digest(buffer.toByteArray());
-
-            return HexFormat.of().formatHex(hash);
-
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to generate chunk ID", e);
-        }
-    }
-
-    private static void writeField(DataOutputStream out, String value)
-            throws java.io.IOException {
-        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
-
-        out.writeInt(bytes.length);
-        out.write(bytes);
-    }
-
     public BulkResponse indexChunks(List<SearchChunk> chunks) {
         BulkResponse bulkResponse;
         try {
@@ -58,8 +27,8 @@ public class SearchIndexService {
                 for (SearchChunk searchChunk : chunks) {
                     bulk.operations(operation -> operation
                             .index(index -> index
-                                    .index("developer_docs2")
-                                    .id(generateId(searchChunk))
+                                    .index("developer_docs3")
+                                    .id(generateChunkId(searchChunk))
                                     .document(searchChunk)));
                 }
 

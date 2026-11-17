@@ -1,21 +1,20 @@
-/*package com.dhruv.atlas.controller;
-
-import com.dhruv.atlas.ingestion.DocumentIngestionService;
+package com.dhruv.atlas.controller;
+import com.dhruv.atlas.ingestion.IngestionOrchestrator;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class IngestionController {
-    private final DocumentIngestionService documentIngestionService;
+    private final IngestionOrchestrator ingestionOrchestrator;
 
-    public IngestionController(DocumentIngestionService documentIngestionService) {
-        this.documentIngestionService = documentIngestionService;
+    public IngestionController(IngestionOrchestrator ingestionOrchestrator) {
+        this.ingestionOrchestrator = ingestionOrchestrator;
     }
+
     @PostMapping("/ingest")
     public ResponseEntity<String> ingest() {
-        documentIngestionService.ingestDocuments();
+        ingestionOrchestrator.ingest();
         return ResponseEntity.ok("Documents ingested successfully. ");
     }
 }
-*/

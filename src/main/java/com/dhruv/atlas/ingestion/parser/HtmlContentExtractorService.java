@@ -26,8 +26,8 @@ public class HtmlContentExtractorService {
             String baseUrl
     ) {
         var requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout(Duration.ofSeconds(2));
-        requestFactory.setReadTimeout(Duration.ofSeconds(40));
+        requestFactory.setConnectTimeout(Duration.ofSeconds(15));
+        requestFactory.setReadTimeout(Duration.ofSeconds(60));
 
         this.restClient = RestClient.builder()
                     .baseUrl(baseUrl)

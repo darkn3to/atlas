@@ -8,12 +8,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jspecify.annotations.NonNull;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Slf4j
+@Service
 public class DocumentationHtmlParserService {
     private static final Pattern HEADING_PATTERN =
             Pattern.compile("h([1-6])");
@@ -64,7 +66,27 @@ public class DocumentationHtmlParserService {
         return links;
     }
 
-    public String extractLanguage(Element element) {
+    public String extractSectionLinks(@NonNull Element element) {
+        Element link = element.selectFirst("a");
+
+        if (link == null) {
+            return null;
+        }
+
+        /*System.out.println(element.text());
+        System.out.println(link.attr("href"));
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        System.out.println();*/
+
+        return link.attr("href");
+    }
+
+    public String extractLanguage(@NonNull Element element) {
         Element code = element.selectFirst("code");
         Element target = code != null ? code : element;
 
@@ -97,7 +119,7 @@ public class DocumentationHtmlParserService {
         return element.wholeText();
     }
 
-    public String extractTable(Element element) {
+    public String extractTable(@NonNull Element element) {
         List<String> rows = new ArrayList<>();
 
         for (Element row : element.select("tr")) {
@@ -119,7 +141,7 @@ public class DocumentationHtmlParserService {
         return String.join("\n", rows);
     }
 
-    public String extractList(Element element) {
+    public String extractList(@NonNull Element element) {
         List<String> items = new ArrayList<>();
 
         for (Element item : element.children()) {
@@ -242,7 +264,7 @@ public class DocumentationHtmlParserService {
             List<String> identifiers = extractIdentifiers(element);
             headingIdentifiers.addAll(identifiers);
 
-            documentationPage.blocks().add(new ContentBlock(ContentType.HEADING, heading, (short) level, new ArrayList<>(headingStack), null, extractLinks(element), List.copyOf(headingIdentifiers)));
+            documentationPage.blocks().add(new ContentBlock(ContentType.HEADING, heading, (short) level, new ArrayList<>(headingStack), extractSectionLinks(element), null, extractLinks(element), List.copyOf(headingIdentifiers)));
             return;
         }
 
@@ -250,26 +272,26 @@ public class DocumentationHtmlParserService {
             case "code":
                 String code = extractCode(element);
                 if (code.isBlank()) return;
-                documentationPage.blocks().add(new ContentBlock(ContentType.CODE_BLOCK, code, (short) 0, new ArrayList<>(headingStack), extractLanguage(element), extractLinks(element), extractIdentifiers(element)));
+                documentationPage.blocks().add(new ContentBlock(ContentType.CODE_BLOCK, code, (short) 0, new ArrayList<>(headingStack), null, extractLanguage(element), extractLinks(element), extractIdentifiers(element)));
                 return;
             case "p":
                 String text = element.wholeText();
                 if (text.isBlank()) return;
-                documentationPage.blocks().add(new ContentBlock(ContentType.PARAGRAPH, text, (short) 0, new ArrayList<>(headingStack), null, extractLinks(element), extractIdentifiers(element)));
+                documentationPage.blocks().add(new ContentBlock(ContentType.PARAGRAPH, text, (short) 0, new ArrayList<>(headingStack), null, null, extractLinks(element), extractIdentifiers(element)));
                 return;
             case "ul", "ol":
                 String content = extractList(element);
                 if (content.isBlank()) return;
-                documentationPage.blocks().add(new ContentBlock(ContentType.LIST, content, (short) 0, new ArrayList<>(headingStack), null, extractLinks(element), extractIdentifiers(element)));
+                documentationPage.blocks().add(new ContentBlock(ContentType.LIST, content, (short) 0, new ArrayList<>(headingStack), null, null, extractLinks(element), extractIdentifiers(element)));
                 return;
             case "table":
                 String table = extractTable(element);
                 if (table.isBlank()) return;
-                documentationPage.blocks().add(new ContentBlock(ContentType.TABLE, table, (short) 0, new ArrayList<>(headingStack), null, extractLinks(element), extractIdentifiers(element)));
+                documentationPage.blocks().add(new ContentBlock(ContentType.TABLE, table, (short) 0, new ArrayList<>(headingStack), null, null, extractLinks(element), extractIdentifiers(element)));
                 return;
             case "a":
                 if (element.hasAttr("href") && !element.attr("href").toLowerCase().startsWith("#")) {
-                    documentationPage.blocks().add(new ContentBlock(ContentType.LINK, element.text().trim(), (short) 0, new ArrayList<>(headingStack), null, extractLinks(element), extractIdentifiers(element)));
+                    documentationPage.blocks().add(new ContentBlock(ContentType.LINK, element.text().trim(), (short) 0, new ArrayList<>(headingStack), null, null, extractLinks(element), extractIdentifiers(element)));
                 }
                 return;
             case "pre":

@@ -43,11 +43,11 @@ public class SearchService {
         List<SearchResult> response = new ArrayList<>();
         try {
             SearchResponse<SearchChunk> searchResponse = esClient.search(s -> s
-                            .index("developer_docs2")
+                            .index("developer_docs3")
                             .size(10)
                             .query(q -> q.bool(b -> b
                                     .should(sh -> sh.matchPhrase(mp -> mp
-                                            .field("title")
+                                            .field("pageTitle")
                                             .query(query)
                                             .boost(12.0f)
                                     ))
@@ -58,7 +58,7 @@ public class SearchService {
                                     ))
                                     .should(sh -> sh.multiMatch(m -> m
                                             .query(query)
-                                            .fields("title^6", "sectionPath^4", "textContent")
+                                            .fields("pageTitle^6", "sectionPath^4", "textContent")
                                             .operator(Operator.And)
                                             .boost(2.0f)
                                     ))
@@ -82,10 +82,12 @@ public class SearchService {
                 }
 
                 response.add(SearchResult.builder()
-                        .id(hit.id())
-                        .title(doc.title())
-                        .sectionPath(String.join(" / ", doc.sectionPath()))
+                        .chunkId(hit.id())
+                        .sectionId(doc.sectionID())
+                        .pageTitle(doc.pageTitle())
+                        .sectionPath(doc.sectionPath())
                         .content(doc.textContent())
+                        .sectionUrl(doc.sectionUrl())
                         .url(doc.sourceUrl())
                         .score(hit.score())
                         .build());
@@ -106,7 +108,7 @@ public class SearchService {
         List<SearchResult> response = new ArrayList<>();
         try {
             SearchResponse<SearchChunk> searchResponse = esClient.search(s -> s
-                            .index("developer_docs2")
+                            .index("developer_docs3")
                             .knn(k -> k
                                     .field("embedding")
                                     .queryVector(searchQueryEmbedding)
@@ -123,10 +125,12 @@ public class SearchService {
                 }
 
                 response.add(SearchResult.builder()
-                        .id(hit.id())
-                        .title(doc.title())
-                        .sectionPath(String.join(" / ", doc.sectionPath()))
+                        .chunkId(hit.id())
+                        .sectionId(doc.sectionID())
+                        .pageTitle(doc.pageTitle())
+                        .sectionPath(doc.sectionPath())
                         .content(doc.textContent())
+                        .sectionUrl(doc.sectionUrl())
                         .url(doc.sourceUrl())
                         .score(hit.score())
                         .build());
@@ -145,7 +149,7 @@ public class SearchService {
 
         for (int i = 0; i < results.size(); i++) {
             SearchResult result = results.get(i);
-            String id = result.getId();
+            String id = result.getChunkId();
             int rank = i + 1;
 
             ranks.put(id, rank);

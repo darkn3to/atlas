@@ -4,8 +4,10 @@ import co.elastic.clients.elasticsearch.core.BulkResponse;
 import com.dhruv.atlas.ingestion.embeddings.EmbeddingService;
 import com.dhruv.atlas.ingestion.model.DocumentationPage;
 import com.dhruv.atlas.ingestion.model.SearchChunk;
-import com.dhruv.atlas.ingestion.parser.DocumentationHtmlParser;
-import com.dhruv.atlas.ingestion.parser.HtmlContentExtractor;
+import com.dhruv.atlas.ingestion.pagediscovery.DiscoveredPage;
+import com.dhruv.atlas.ingestion.pagediscovery.SitemapDiscoveryStrategy;
+import com.dhruv.atlas.ingestion.parser.DocumentationHtmlParserService;
+import com.dhruv.atlas.ingestion.parser.HtmlContentExtractorService;
 import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,8 +18,6 @@ import org.w3c.dom.NodeList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.dhruv.atlas.utils.Utils.fetchDocument;
@@ -26,17 +26,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 public class ChunkerTest {
-    private final DocumentationHtmlParser parser =
-            new DocumentationHtmlParser();
-
     @Autowired
     SearchIndexService searchIndexService;
 
     @Autowired
-    HtmlContentExtractor htmlContentExtractor;
+    HtmlContentExtractorService htmlContentExtractorService;
 
     @Autowired
     EmbeddingService embeddingService;
+
+    @Autowired
+    DocumentationHtmlParserService documentationHtmlParserService;
+
+    @Autowired
+    SitemapDiscoveryStrategy sitemapDiscoveryStrategy;
 
     //@Test
     public void test2() throws Exception {
@@ -51,9 +54,9 @@ public class ChunkerTest {
                 + embedding.subList(0, 5));
     }
 
-    @Test
+    //@Test
     void test() throws Exception {
-        //var extractor = new HtmlContentExtractor("https://readability-js-cwg4g4gcg9c2amb4.centralindia-01.azurewebsites.net");
+        //var extractor = new HtmlContentExtractorService("https://readability-js-cwg4g4gcg9c2amb4.centralindia-01.azurewebsites.net");
 
         try (InputStream input = ChunkerTest.class.getResourceAsStream("/ingest.xml")) {
             DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
@@ -62,25 +65,42 @@ public class ChunkerTest {
             org.w3c.dom.Document doc = documentBuilder.parse(input);
             NodeList nodeList = doc.getElementsByTagName("loc");
 
-
+            Chunker chunker = new Chunker(2000, new EmbeddingService());
             for (int i = 0; i < nodeList.getLength(); i++) {
                 Node node = nodeList.item(i);
 
                 String url = node.getTextContent();
 
                 Document document = fetchDocument(url);
-                var result = htmlContentExtractor.extract(url, document.html());
+                var result = htmlContentExtractorService.extract(url, document.html());
 
-                DocumentationPage page = parser.parse(url, result.html(), document.html());
-                Chunker chunker = new Chunker(2000, new EmbeddingService());
+                DocumentationPage page = documentationHtmlParserService.parse(url, result.html(), document.html());
                 List<SearchChunk> s = chunker.performChunking(page);
 
-                //BulkResponse response = searchIndexService.indexChunks(s);
+                searchIndexService.indexChunks(s);
                 System.out.println((i+1));
             }
         }
 
-       /* String url = "https://redis.io/docs/latest/develop/get-started/search-tutorial/vector-search/";
+        /*List<DiscoveredPage> nodeLists = sitemapDiscoveryStrategy.discover();
+
+        for (int i = 0; i < nodeLists.size(); i++) {
+            DiscoveredPage node = nodeLists.get(i);
+
+            String url = node.url();
+
+            Document document = fetchDocument(url);
+            var result = htmlContentExtractorService.extract(url, document.html());
+
+            DocumentationPage page = documentationHtmlParserService.parse(url, result.html(), document.html());
+            Chunker chunker = new Chunker(50, new EmbeddingService());
+            List<SearchChunk> s = chunker.performChunking(page);
+
+            //searchIndexService.indexChunks(s);
+            System.out.println((i+1));
+        }*/
+
+        /* String url = "https://redis.io/docs/latest/develop/get-started/search-tutorial/vector-search/";
 
         Document document = fetchDocument(url);
         var result = htmlContentExtractor.extract(url, document.html());

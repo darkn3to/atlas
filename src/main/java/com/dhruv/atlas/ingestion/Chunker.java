@@ -2,6 +2,7 @@ package com.dhruv.atlas.ingestion;
 
 import com.dhruv.atlas.ingestion.embeddings.EmbeddingService;
 import com.dhruv.atlas.ingestion.model.ContentBlock;
+import com.dhruv.atlas.ingestion.model.ContentType;
 import com.dhruv.atlas.ingestion.model.DocumentationPage;
 import com.dhruv.atlas.ingestion.model.SearchChunk;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +10,8 @@ import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.dhruv.atlas.utils.Utils.generateSectionId;
 
 @Slf4j
 //@Service
@@ -34,69 +37,82 @@ public class Chunker {
         return true;
     }
 
+    private @NonNull SearchChunk buildChunk(
+            @NonNull DocumentationPage page,
+            @NonNull StringBuilder contentBuffer,
+            List<String> sectionPath,
+            String sectionUrl,
+            List<String> identifiers) {
+        String text = contentBuffer.toString().trim();
+        List<Float> embedding = embeddingService.generateEmbeddings(text);
+        String finalSectionUrl = (sectionUrl != null) ? page.sourceUrl() + sectionUrl : null;
+
+        return new SearchChunk(
+                generateSectionId(page.sourceUrl(), sectionPath),
+                text,
+                page.sourceUrl(),
+                sectionPath,
+                finalSectionUrl,
+                page.title(),
+                embedding,
+                identifiers
+        );
+    }
+
     public List<SearchChunk> performChunking(@NonNull DocumentationPage documentationPage) {
         List<SearchChunk> chunks = new ArrayList<>();
         List<String> currentSectionPath = null;
+        String currentSectionUrl = null;
 
         StringBuilder contentBuffer = new StringBuilder();
         List<String> identifiers = new ArrayList<>();
 
         for (ContentBlock cb : documentationPage.blocks()) {
             List<String> blockSectionPath = cb.sectionPath();
-            String blockContent = cb.textContent();
 
             boolean sectionChanged = (currentSectionPath != null)
                     && !compareSections(currentSectionPath, blockSectionPath);
 
-            int separatorLength = (contentBuffer.isEmpty()) ? 0 : 2;
-            int proposedSize = contentBuffer.length()
-                    + separatorLength
-                    + blockContent.length();
+            if (sectionChanged && !contentBuffer.isEmpty()) {
+                chunks.add(buildChunk(documentationPage, contentBuffer, currentSectionPath, currentSectionUrl, identifiers));
+                contentBuffer = new StringBuilder();
+                identifiers = new ArrayList<>();
+                currentSectionUrl = null;
+            }
 
-            boolean sizeExceeded = proposedSize > maxChunkSize;
+            if (sectionChanged || currentSectionPath == null) {
+                currentSectionPath = new ArrayList<>(blockSectionPath);
+            }
 
-            if (!contentBuffer.isEmpty() && (sectionChanged || sizeExceeded)) {
-                List<Float> embedding = embeddingService.generateEmbeddings(contentBuffer.toString());
+            if (cb.sectionUrl() != null && !cb.sectionUrl().isEmpty()) {
+                currentSectionUrl = cb.sectionUrl();
+            }
+            if (cb.identifiers() != null && !cb.identifiers().isEmpty()) {
+                identifiers.addAll(cb.identifiers());
+            }
 
-                //log.info(String.valueOf(embedding.size()));
-                //if (!identifiers.isEmpty()) System.out.println(identifiers);
-                chunks.add(new SearchChunk(
-                        contentBuffer.toString().trim(),
-                        documentationPage.sourceUrl(),
-                        currentSectionPath,
-                        documentationPage.title(),
-                        embedding,
-                        identifiers
-                ));
+            if (cb.type() == ContentType.HEADING) {
+                continue;
+            }
 
+            String blockContent = cb.textContent();
+            int separatorLength = contentBuffer.isEmpty() ? 0 : 2;
+            boolean sizeExceeded = (contentBuffer.length() + separatorLength + blockContent.length()) > maxChunkSize;
+
+            if (!contentBuffer.isEmpty() && sizeExceeded) {
+                chunks.add(buildChunk(documentationPage, contentBuffer, currentSectionPath, currentSectionUrl, identifiers));
                 contentBuffer = new StringBuilder();
                 identifiers = new ArrayList<>();
             }
 
-            if (contentBuffer.isEmpty()) {
-                currentSectionPath = new ArrayList<>(blockSectionPath);
-            } else {
+            if (!contentBuffer.isEmpty()) {
                 contentBuffer.append("\n\n");
             }
-
             contentBuffer.append(blockContent);
-            if (cb.identifiers() != null && !cb.identifiers().isEmpty()) {
-                identifiers.addAll(cb.identifiers());
-            }
         }
 
         if (!contentBuffer.isEmpty()) {
-            List<Float> embedding = embeddingService.generateEmbeddings(contentBuffer.toString());
-            //log.info(String.valueOf(embedding.size()));
-            //if (!identifiers.isEmpty()) System.out.println(identifiers);
-            chunks.add(new SearchChunk(
-                    contentBuffer.toString().trim(),
-                    documentationPage.sourceUrl(),
-                    currentSectionPath,
-                    documentationPage.title(),
-                    embedding,
-                    identifiers
-            ));
+            chunks.add(buildChunk(documentationPage, contentBuffer, currentSectionPath, currentSectionUrl, identifiers));
         }
 
         return chunks;

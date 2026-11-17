@@ -7,6 +7,7 @@ public record ContentBlock(
     String textContent,
     short headingLevel,
     List<String> sectionPath,
+    String sectionUrl,
     String language,
     List<links> contentBlockLinks,
     List<String> identifiers

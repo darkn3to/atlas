@@ -2,27 +2,29 @@ package com.dhruv.atlas.ingestion;
 
 import com.dhruv.atlas.ingestion.model.ContentBlock;
 import com.dhruv.atlas.ingestion.model.DocumentationPage;
-import com.dhruv.atlas.ingestion.parser.DocumentationHtmlParser;
+import com.dhruv.atlas.ingestion.parser.DocumentationHtmlParserService;
+import com.dhruv.atlas.ingestion.parser.HtmlContentExtractorService;
 import org.jsoup.nodes.Document;
-import org.junit.jupiter.api.Test;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import static com.dhruv.atlas.utils.Utils.fetchDocument;
+
 class DocumentationHtmlParserTest {
 
-    private final DocumentationHtmlParser parser =
-            new DocumentationHtmlParser();
+    private final DocumentationHtmlParserService parser =
+            new DocumentationHtmlParserService();
 
     //@Test
     void shouldPreserveDocumentStructureAndSectionContext() throws IOException {
 
         String url = "https://redis.io/docs/latest/develop/get-started/search-tutorial/vector-search";
 
-        var extractor = new HtmlContentExtractor("https://readability-js-cwg4g4gcg9c2amb4.centralindia-01.azurewebsites.net");
-        DocumentFetchService documentFetchService = new DocumentFetchService();
-        Document document = documentFetchService.fetch(url);
+        var extractor = new HtmlContentExtractorService("https://readability-js-cwg4g4gcg9c2amb4.centralindia-01.azurewebsites.net");
+
+        Document document = fetchDocument(url);
         var result = extractor.extract(url, document.html());
 
         DocumentationPage page = parser.parse(url, result.html(), document.html());

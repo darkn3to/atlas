@@ -3,6 +3,7 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 .kotlin
+**/src/*/resources/**/*.xml
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
@@ -44,5 +45,3 @@ build/
 *.bak
 *.yml
 *.txt
-
-/src/test/

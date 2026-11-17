@@ -3,10 +3,12 @@ package com.dhruv.atlas.ingestion.model;
 import java.util.List;
 
 public record SearchChunk(
+        String sectionID,
         String textContent,
         String sourceUrl,
         List<String> sectionPath,
-        String title,
+        String sectionUrl,
+        String pageTitle,
         List<Float> embedding,
         List<String> identifiers
 ) {
