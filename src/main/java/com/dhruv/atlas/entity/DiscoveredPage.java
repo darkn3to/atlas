@@ -1,10 +1,8 @@
 package com.dhruv.atlas.entity;
 
-import java.time.LocalDateTime;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import java.time.OffsetDateTime;
+
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -17,23 +15,25 @@ import lombok.AllArgsConstructor;
 public class DiscoveredPage {
     @Id
     @Column(name = "id")
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
 
-    @Column(name = "source_id", nullable = false)
-    private Long sourceId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "source_id", referencedColumnName = "id", nullable = false)
+    private IngestionSource source;
 
     @Column(name = "url", nullable = false)
     private String url;
 
     @Column(name = "last_modified")
-    private LocalDateTime lastModified;
+    private OffsetDateTime lastModified;
 
     @Column(name = "content_hash")
     private String contentHash;
 
     @Column(name = "last_seen_at", nullable = false)
-    private LocalDateTime lastSeenAt;
+    private OffsetDateTime lastSeenAt;
 
     @Column(name = "last_indexed_at")
-    private LocalDateTime lastIndexedAt;
+    private OffsetDateTime lastIndexedAt;
 }

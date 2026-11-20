@@ -7,7 +7,6 @@ import com.dhruv.atlas.ingestion.model.DocumentationPage;
 import com.dhruv.atlas.ingestion.model.SearchChunk;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +24,7 @@ public class Chunker {
         this.embeddingService = embeddingService;
     }
 
-    private boolean compareSections(List<String> a, List<String> b) {
+    private boolean compareSections(@NonNull List<String> a, @NonNull List<String> b) {
         if (a.size() != b.size()) return false;
 
         for (int i = 0; i < a.size(); i++) {
@@ -47,8 +46,12 @@ public class Chunker {
         List<Float> embedding = embeddingService.generateEmbeddings(text);
         String finalSectionUrl = (sectionUrl != null) ? page.sourceUrl() + sectionUrl : null;
 
+        log.debug("Processing heading: {}", sectionPath.getLast());
+
+        String sectionId = generateSectionId(page.sourceUrl(), sectionPath);
+
         return new SearchChunk(
-                generateSectionId(page.sourceUrl(), sectionPath),
+                sectionId,
                 text,
                 page.sourceUrl(),
                 sectionPath,

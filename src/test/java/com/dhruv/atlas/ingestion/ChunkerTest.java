@@ -1,26 +1,16 @@
 package com.dhruv.atlas.ingestion;
 
-import co.elastic.clients.elasticsearch.core.BulkResponse;
 import com.dhruv.atlas.ingestion.embeddings.EmbeddingService;
-import com.dhruv.atlas.ingestion.model.DocumentationPage;
-import com.dhruv.atlas.ingestion.model.SearchChunk;
-import com.dhruv.atlas.ingestion.pagediscovery.DiscoveredPage;
 import com.dhruv.atlas.ingestion.pagediscovery.SitemapDiscoveryStrategy;
 import com.dhruv.atlas.ingestion.parser.DocumentationHtmlParserService;
 import com.dhruv.atlas.ingestion.parser.HtmlContentExtractorService;
-import org.jsoup.nodes.Document;
-import org.junit.jupiter.api.Test;
+import com.dhruv.atlas.repository.DocumentationSectionRepository;
+import com.dhruv.atlas.service.PersistenceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.InputStream;
 import java.util.List;
 
-import static com.dhruv.atlas.utils.Utils.fetchDocument;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -28,6 +18,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class ChunkerTest {
     @Autowired
     SearchIndexService searchIndexService;
+
+    @Autowired
+    DocumentationSectionRepository documentationSectionRepository;
 
     @Autowired
     HtmlContentExtractorService htmlContentExtractorService;
@@ -40,6 +33,9 @@ public class ChunkerTest {
 
     @Autowired
     SitemapDiscoveryStrategy sitemapDiscoveryStrategy;
+
+    @Autowired
+    PersistenceService persistenceService;
 
     //@Test
     public void test2() throws Exception {
@@ -58,7 +54,7 @@ public class ChunkerTest {
     void test() throws Exception {
         //var extractor = new HtmlContentExtractorService("https://readability-js-cwg4g4gcg9c2amb4.centralindia-01.azurewebsites.net");
 
-        try (InputStream input = ChunkerTest.class.getResourceAsStream("/ingest.xml")) {
+        /*try (InputStream input = ChunkerTest.class.getResourceAsStream("/ingest.xml")) {
             DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
 
@@ -80,7 +76,7 @@ public class ChunkerTest {
                 searchIndexService.indexChunks(s);
                 System.out.println((i+1));
             }
-        }
+        }*/
 
         /*List<DiscoveredPage> nodeLists = sitemapDiscoveryStrategy.discover();
 
@@ -93,7 +89,7 @@ public class ChunkerTest {
             var result = htmlContentExtractorService.extract(url, document.html());
 
             DocumentationPage page = documentationHtmlParserService.parse(url, result.html(), document.html());
-            Chunker chunker = new Chunker(50, new EmbeddingService());
+            Chunker chunker = new Chunker(2000, new EmbeddingService(), documentationSectionRepository);
             List<SearchChunk> s = chunker.performChunking(page);
 
             //searchIndexService.indexChunks(s);
@@ -121,4 +117,91 @@ public class ChunkerTest {
         assertEquals("Bitch", s.getFirst().sectionPath().getLast());
         assertEquals("Vector search", s.getLast().sectionPath().getFirst());*/
     }
+    /*@Test
+    void testIncrementalIngestion() throws Exception {
+
+        // 1. Retrieve registered source
+        IngestionSource source = entryService.ingestionSourceRepository.findById(1)
+                .orElseThrow(() ->
+                        new IllegalStateException("Source not found"));
+
+        // 2. Discover pages from sitemap
+        List<SitemapPage> sitemapPages =
+                sitemapDiscoveryStrategy.discover(source.getSourceUrl());
+
+        System.out.println("Discovered pages: " + sitemapPages.size());
+
+        // 3. Process discovered pages
+        for (SitemapPage sitemapPage : sitemapPages) {
+
+            String url = sitemapPage.url();
+
+            // 3.1 Find existing page or create a new one
+            DiscoveredPage page = entryService.discoveredPageRepository
+                    .findBySourceIdAndUrl(source.getId(), url)
+                    .orElseGet(() -> {
+                        DiscoveredPage newPage = new DiscoveredPage();
+                        newPage.setSource(source);
+                        newPage.setUrl(url);
+                        return newPage;
+                    });
+
+            // 3.2 Update sitemap metadata
+            page.setLastModified(sitemapPage.lastModified());
+            page.setLastSeenAt(LocalDateTime.now());
+
+            page = discoveredPageRepository.save(page);
+
+            // 4. Fetch documentation HTML
+            Document document = fetchDocument(url);
+
+            // 5. Extract meaningful HTML
+            var result = htmlContentExtractorService.extract(
+                    url,
+                    document.html()
+            );
+
+            String cleanedHtml = result.html();
+
+            // 6. Generate page hash
+            String pageHash = HashUtils.generateHash(cleanedHtml);
+
+            // 7. Skip unchanged pages
+            if (pageHash.equals(page.getContentHash())) {
+                System.out.println("Unchanged: " + url);
+                continue;
+            }
+
+            System.out.println("Changed/New: " + url);
+
+            // 8. Parse documentation
+            DocumentationPage documentationPage =
+                    documentationHtmlParserService.parse(
+                            url,
+                            cleanedHtml,
+                            document.html()
+                    );
+
+            // 9. Generate chunks
+            Chunker chunker = new Chunker(
+                    2000,
+                    embeddingService,
+                    documentationSectionRepository
+            );
+
+            List<SearchChunk> chunks =
+                    chunker.performChunking(documentationPage);
+
+            // 10. Index chunks
+            searchIndexService.indexChunks(chunks);
+
+            // 11. Update page metadata after successful indexing
+            page.setContentHash(pageHash);
+            page.setLastIndexedAt(LocalDateTime.now());
+
+            discoveredPageRepository.save(page);
+
+            System.out.println("Indexed chunks: " + chunks.size());
+        }
+    }*/
 }

@@ -2,6 +2,7 @@ package com.dhruv.atlas.utils;
 
 import com.dhruv.atlas.exception.DocumentIngestionException;
 import com.dhruv.atlas.ingestion.model.SearchChunk;
+import com.dhruv.atlas.ingestion.pagediscovery.DiscoveredPage;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jspecify.annotations.NonNull;

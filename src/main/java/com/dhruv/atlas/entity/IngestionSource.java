@@ -1,13 +1,11 @@
 package com.dhruv.atlas.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 @Data
 @NoArgsConstructor
@@ -17,7 +15,8 @@ import java.time.LocalDateTime;
 public class IngestionSource {
     @Id
     @Column(name = "id")
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -29,5 +28,10 @@ public class IngestionSource {
     private String sourceUrl;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
+
+    @PrePersist
+    public void prePersist() {
+        createdAt = OffsetDateTime.now(ZoneOffset.UTC);
+    }
 }
