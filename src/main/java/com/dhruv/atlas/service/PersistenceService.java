@@ -76,9 +76,19 @@ public class PersistenceService {
         discoveredPageRepository.save(page);
     }
 
-    public DocumentationSection registerDocumentationSection() {
+    public void registerDocumentationSection(
+            DiscoveredPage page,
+            String heading,
+            String sectionUrl,
+            String contentHash
+            ) {
         DocumentationSection documentationSection = new DocumentationSection();
+        documentationSection.setDiscoveredPage(page);
+        documentationSection.setHeading(heading);
+        documentationSection.setSectionUrl(sectionUrl);
+        documentationSection.setContentHash(contentHash);
+        documentationSection.setUpdatedAt(OffsetDateTime.now(ZoneOffset.UTC));
 
-        return documentationSectionRepository.save(documentationSection);
+        documentationSectionRepository.save(documentationSection);
     }
 }
